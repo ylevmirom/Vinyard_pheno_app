@@ -576,16 +576,17 @@
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const STAGES = [7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
 
+// MAP_ROWS generated directly from Neot_Kdumim_Vineyard_map.xlsx — 83 accession slots
 const MAP_ROWS = [
-  {row:1,accessions:[{id:"GV91",n:5},{id:"GV78",n:5},{id:"GV95",n:5},{id:"GV105",n:5},{id:"GV87",n:3},{id:"GV101",n:3},{id:"GV85",n:3},{id:"GV24",n:2},{id:"GV109",n:5}]},
-  {row:2,accessions:[{id:"GV34",n:5},{id:"GV49",n:5},{id:"GV94",n:5},{id:"GV102",n:3},{id:"GV72",n:5},{id:"GV50",n:5},{id:"GV79",n:4}]},
-  {row:3,accessions:[{id:"GV81",n:6},{id:"GV92",n:1},{id:"GV54",n:4},{id:"GV95",n:5},{id:"GV105",n:5}]},
-  {row:4,accessions:[{id:"GV20",n:5},{id:"GV19",n:4},{id:"GV20",n:2},{id:"GV103",n:3},{id:"GV106",n:5},{id:"GV3",n:1},{id:"GV107",n:4},{id:"GV27",n:5},{id:"GV30",n:1},{id:"GV13",n:4}]},
-  {row:5,accessions:[{id:"GV36",n:5},{id:"GV2",n:4},{id:"GV83",n:5},{id:"GV76",n:5},{id:"GV14",n:6}]},
-  {row:6,accessions:[{id:"GV62",n:5},{id:"GV9(7)",n:5},{id:"GV7",n:5},{id:"GV42",n:5},{id:"GV24",n:5},{id:"GV28",n:5},{id:"GV38",n:6}]},
-  {row:7,accessions:[{id:"GV65",n:5},{id:"GV68",n:5},{id:"GV100",n:5},{id:"GV53",n:5},{id:"GV32",n:5}]},
-  {row:8,accessions:[{id:"GV69",n:6}]},
-  {row:9,accessions:[{id:"GV1",n:5},{id:"GV33",n:5},{id:"GV73",n:5},{id:"GV66",n:6}]},
+  {row:1, accessions:[{id:"GV91",n:5},{id:"GV78",n:5},{id:"GV95",n:5},{id:"GV105",n:5},{id:"GV87",n:3},{id:"GV101",n:3},{id:"GV85",n:3},{id:"GV24",n:2},{id:"GV109",n:5}]},
+  {row:2, accessions:[{id:"GV34",n:5},{id:"GV49",n:5},{id:"GV94",n:5},{id:"GV102",n:3},{id:"GV72",n:5},{id:"GV50",n:5},{id:"GV79",n:4}]},
+  {row:3, accessions:[{id:"GV81",n:6},{id:"GV92",n:1},{id:"GV54",n:4},{id:"GV95",n:5},{id:"GV105",n:5}]},
+  {row:4, accessions:[{id:"GV20",n:5},{id:"GV19",n:4},{id:"GV20",n:2},{id:"GV103",n:3},{id:"GV106",n:5},{id:"GV3",n:1},{id:"GV107",n:4},{id:"GV27",n:5},{id:"GV30",n:1},{id:"GV13",n:4}]},
+  {row:5, accessions:[{id:"GV36",n:5},{id:"GV2",n:4},{id:"GV83",n:5},{id:"GV76",n:5},{id:"GV14",n:6}]},
+  {row:6, accessions:[{id:"GV62",n:5},{id:"GV9(7)",n:5},{id:"GV7",n:5},{id:"GV42",n:5},{id:"GV24",n:5},{id:"GV28",n:5},{id:"GV38",n:6}]},
+  {row:7, accessions:[{id:"GV65",n:5},{id:"GV68",n:5},{id:"GV100",n:5},{id:"GV53",n:5},{id:"GV32",n:5}]},
+  {row:8, accessions:[{id:"GV69",n:6}]},
+  {row:9, accessions:[{id:"GV1",n:5},{id:"GV33",n:5},{id:"GV73",n:5},{id:"GV66",n:6}]},
   {row:10,accessions:[{id:"GV34",n:5},{id:"GV67",n:5},{id:"GV71",n:4},{id:"GV88",n:3}]},
   {row:11,accessions:[{id:"GV63",n:5},{id:"GV31",n:4}]},
   {row:12,accessions:[{id:"GV85",n:5},{id:"GV104",n:5},{id:"GV108",n:5}]},
@@ -600,6 +601,22 @@ const MAP_ROWS = [
   {row:21,accessions:[{id:"GV182",n:4}]},
   {row:22,accessions:[{id:"GV84",n:3}]}
 ];
+// Assign a unique key to every slot (row_id format for duplicates)
+MAP_ROWS.forEach(r => {
+  const seen = {};
+  r.accessions.forEach(a => {
+    seen[a.id] = (seen[a.id] || 0) + 1;
+  });
+  const count = {};
+  r.accessions.forEach(a => {
+    if (seen[a.id] > 1) {
+      count[a.id] = (count[a.id] || 0) + 1;
+      a.key = a.id + '_r' + r.row + '_' + count[a.id];
+    } else {
+      a.key = a.id + '_r' + r.row;
+    }
+  });
+});
 
 // Pre-loaded 2026 data
 const PRELOADED = {
@@ -664,21 +681,21 @@ let currentAcc = null;
 function storageKey(k) { return 'vp_' + k; }
 
 function loadAll() {
-  // Seed from preloaded
-  Object.entries(PRELOADED).forEach(([id, d]) => {
-    if (!localStorage.getItem(storageKey(id))) {
-      localStorage.setItem(storageKey(id), JSON.stringify(d));
-    }
-  });
+  // Seed preloaded data using the correct row-based key for each slot
   MAP_ROWS.forEach(r => r.accessions.forEach(a => {
-    const raw = localStorage.getItem(storageKey(a.id));
-    DATA[a.id] = raw ? JSON.parse(raw) : null;
+    if (!localStorage.getItem(storageKey(a.key)) && PRELOADED[a.id]) {
+      localStorage.setItem(storageKey(a.key), JSON.stringify(PRELOADED[a.id]));
+    }
+  }));
+  MAP_ROWS.forEach(r => r.accessions.forEach(a => {
+    const raw = localStorage.getItem(storageKey(a.key));
+    DATA[a.key] = raw ? JSON.parse(raw) : null;
   }));
 }
 
-function save(id, d) {
-  DATA[id] = d;
-  localStorage.setItem(storageKey(id), JSON.stringify(d));
+function save(key, d) {
+  DATA[key] = d;
+  localStorage.setItem(storageKey(key), JSON.stringify(d));
 }
 
 // ── RENDER MAP ────────────────────────────────────────────────────────────────
@@ -695,7 +712,7 @@ function renderMap() {
     const accsEl = document.createElement('div');
     accsEl.className = 'row-accessions';
     rowData.accessions.forEach((acc, ai) => {
-      const d = DATA[acc.id];
+      const d = DATA[acc.key];
       const btn = document.createElement('div');
       btn.className = 'accession-btn' + (d ? ' has-data' : '');
       btn.onclick = () => openForm(rowData.row, acc, ri, ai);
@@ -732,7 +749,7 @@ function updateProgress() {
   let total = 0, done = 0;
   MAP_ROWS.forEach(r => r.accessions.forEach(a => {
     total++;
-    if (DATA[a.id]) done++;
+    if (DATA[a.key]) done++;
   }));
   const pct = total ? (done / total * 100) : 0;
   document.getElementById('prog-fill').style.width = pct + '%';
@@ -744,13 +761,13 @@ let formState = {};
 
 function openForm(rowNum, acc, ri, ai) {
   currentAcc = acc;
-  currentKey = acc.id;
+  currentKey = acc.key;
 
   document.getElementById('form-gv-title').textContent = acc.id;
   document.getElementById('form-gv-sub').textContent = 'Row ' + rowNum + ' · ' + acc.n + ' plants planted';
 
   // Load existing or defaults
-  const existing = DATA[acc.id] || {};
+  const existing = DATA[acc.key] || {};
   formState = {
     num_plants: existing.num_plants != null ? existing.num_plants : acc.n,
     planted: existing.planted != null ? existing.planted : acc.n,
@@ -831,7 +848,7 @@ function exportCSV() {
   const rows = ['GV_id,row,position,num_plants,num_plants_planted,reproductive_stage,flower_type,notes,date'];
   MAP_ROWS.forEach(rowData => {
     rowData.accessions.forEach((acc, ai) => {
-      const d = DATA[acc.id];
+      const d = DATA[acc.key];
       const planted = d ? d.planted : acc.n;
       const np = d ? d.num_plants : '';
       const stage = d ? (d.stage || '') : '';
